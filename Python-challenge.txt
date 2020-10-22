@@ -1,0 +1,63 @@
+====== Python Challenge =======
+
+import pandas as pd
+import requests as r
+import sqlite3
+from sqlalchemy import create_engine
+
+# Setting the path to the xlsx file:
+orders_df = pd.read_excel('/Users/onurkarayalcin/Desktop/wefox_case_study/DE/source_data/orders.xlsx')
+# API Key
+api_key = '4uQw0R1Phi5hLm30bJhmQkGl73rvf3esNkpqf7oR1ENMdU8IisXfPcjxtUsmMrFO'
+
+#Pulling more geo data from API regarding zip codes in orders file
+listoftuple = []
+for zipcode in orders_df['zipcode']:
+    url = 'https://www.zipcodeapi.com/rest/'+api_key+'/info.csv/'+str(zipcode)+'/'
+    a = pd.read_csv(url)
+    listoftuple.append((a['zip_code'][0], a['lat'][0], a['lng'][0], a['city'][0], a['state'][0]))
+
+#converting list of tuples to dataframe format     
+geo_data = pd.DataFrame(listoftuple, columns = ["zip_code","latitude","longitude","city","state"])   
+
+# Merging two data frames into one transversally (side to side)
+table_orders = pd.concat([orders_df,geo_data.reindex(orders_df.index)], axis=1) 
+#zipcode and zip_code columns are duplicated, therefore we need to drop one of them 
+del table_orders['zipcode']
+
+# Here we need to create a database in the local machine to be able to load extracted data into the a table 
+# As path here I used the one according to location of orders.db in my local computer
+#In order to run the code it is necessary to provide a new valid path in other computers 
+conn = sqlite3.connect('/path to root in local computer/orders.db')
+
+#The table is created according to previously handled dataframe(table_orders)
+c = conn.execute("""CREATE TABLE orders(
+    order_id integer,
+    order_date real,
+    user_id integer,
+    total integer,
+    item_count real,
+    zipcode integer,
+    latitude real,
+    longitude real,
+    city text,
+    state text
+    )""")
+
+cursor = conn.cursor()
+c.executemany('INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?)', table_orders)
+
+conn.commit()
+
+conn.close()
+
+#######
+#In order to check if order.db and orders table are created, the most effective way to check it by deploying the lines of codes in CLI(prompt) screen:
+# 1->sqlite3 
+# 2-> .databases
+# 3-> .tables
+# 4-> select * from order.orders 
+# All the codes mentioned have to be executed incrementally to see whether data is loaded into the table. Alternatively it is possible to create database, tables and inserting data in CLI screen. 
+
+#In oder to schedule a job to upload data regularly to sqlite3 database, there is a mostly way is using apscheduler library in python. 
+You need to run the code (from apscheduler.schedulers.background import BackgroundScheduler) in order to use related libraries to schedule a job to upload data regularly. 

@@ -1,0 +1,22 @@
+======== SQL -Challenge =======
+
+select 
+*
+FROM
+(SELECT 
+case 
+	when f.start_loc = 'Berlin' and end_loc = 'Paris' Then 'Route-1' 
+    when f.start_loc = 'Paris' and end_loc = 'New York' Then 'Route-2' 
+    when f.start_loc = 'London' and end_loc = 'New Delhi' Then 'Route-3' 
+END Route,
+ f.flight_nr,
+f.start_loc,
+f.end_loc,
+cs.customer_id,
+count(cs.customer_id)
+from dna_test.customer_arrival cs
+LEFT JOIN dna_test.flights f on cs.arrived_at = f.start_loc
+where cs.arrival_time <= f.depart_time
+group BY f.flight_nr, f.start_loc, f.end_loc, cs.customer_id
+order by route, customer_id) new
+

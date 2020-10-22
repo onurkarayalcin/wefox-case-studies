@@ -1,0 +1,3 @@
+=========== README - SQL =========
+
+In order to optimize number of passenger per flight, we need to distribute it equally as much as possible. In the SQL code I have developed it shows which flights are possible and in this case, how many passengers can use which flights. But the number of possible number of passengers is added up in late flights. In order to eliminate it some analytical functions can be utilized in order to rank the flights by route and for finding exact optimized result. However, it would be better, if the question was more detailed. 
